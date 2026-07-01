@@ -37,11 +37,13 @@ jobs:
 
       - name: Backfill labels on open PRs
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          RAW_MAX: ${{ inputs.max_items }}
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           script: |
             const { owner, repo } = context.repo;
-            const rawMax = '${{ inputs.max_items }}';
+            const rawMax = process.env.RAW_MAX;
             const maxItems = parseInt(rawMax, 10);
             if (isNaN(maxItems) || maxItems <= 0) {
               core.setFailed(`Invalid max_items: "${rawMax}" — must be a positive integer`);
