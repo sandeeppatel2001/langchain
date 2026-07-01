@@ -118,7 +118,7 @@ class SandboxIntegrationTests(BaseStandardTests):
         result = sandbox_backend.write(test_path, content)
         assert result.error is None
         assert result.path == test_path
-        exec_result = sandbox_backend.execute(f"cat {test_path}")
+        exec_result = sandbox_backend.execute(f"cat {_quote(test_path)}")
         assert exec_result.output.strip() == content
 
     def test_read_basic_file(
@@ -302,7 +302,7 @@ class SandboxIntegrationTests(BaseStandardTests):
         assert upload_responses[0].path == test_path
         assert upload_responses[0].error is None
 
-        result = sandbox_backend.execute(f"cat {test_path}")
+        result = sandbox_backend.execute(f"cat {_quote(test_path)}")
         assert result.output.strip() == test_content.decode()
 
     def test_download_single_file(
@@ -481,7 +481,7 @@ class SandboxIntegrationTests(BaseStandardTests):
             pytest.skip("Sync tests not supported.")
 
         dir_path = self.sandbox_path("test_directory", root_dir=sandbox_test_root)
-        sandbox_backend.execute(f"rm -rf {dir_path} && mkdir -p {dir_path}")
+        sandbox_backend.execute(f"rm -rf {_quote(dir_path)} && mkdir -p {_quote(dir_path)}")
 
         responses = sandbox_backend.download_files([dir_path])
 
@@ -499,13 +499,13 @@ class SandboxIntegrationTests(BaseStandardTests):
 
         test_path = self.sandbox_path("test_no_read.txt", root_dir=sandbox_test_root)
         sandbox_backend.execute(
-            f"rm -f {test_path} && echo secret > {test_path} && chmod 000 {test_path}"
+            f"rm -f {_quote(test_path)} && echo secret > {_quote(test_path)} && chmod 000 {_quote(test_path)}"
         )
 
         try:
             responses = sandbox_backend.download_files([test_path])
         finally:
-            sandbox_backend.execute(f"chmod 644 {test_path} || true")
+            sandbox_backend.execute(f"chmod 644 {_quote(test_path)} || true")
 
         assert len(responses) == 1
         assert responses[0].path == test_path
@@ -551,7 +551,7 @@ class SandboxIntegrationTests(BaseStandardTests):
         )
         path = f"{dir_path}/deepagents_test_upload.txt"
         content = b"nope"
-        sandbox_backend.execute(f"rm -rf {dir_path}")
+        sandbox_backend.execute(f"rm -rf {_quote(dir_path)}")
 
         responses = sandbox_backend.upload_files([(path, content)])
         assert len(responses) == 1
