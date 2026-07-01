@@ -554,6 +554,14 @@ class Reviver:
             if self.init_validator is not None:
                 self.init_validator(mapping_key, kwargs)
 
+            for component in import_dir:
+                if not component.isidentifier():
+                    msg = f"Invalid namespace: {value}"
+                    raise ValueError(msg)
+            if not name.isidentifier():
+                msg = f"Invalid namespace: {value}"
+                raise ValueError(msg)
+
             mod = importlib.import_module(".".join(import_dir))
 
             cls = getattr(mod, name)
