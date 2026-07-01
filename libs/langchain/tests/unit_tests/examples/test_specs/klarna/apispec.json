@@ -30,7 +30,9 @@
                   "description": "query, must be between 2 and 100 characters",
                   "required": true,
                   "schema": {
-                     "type": "string"
+                     "type": "string",
+                     "pattern": "^[A-Z0-9_-]{3,20}$",
+                     "maxLength": 128
                   }
                },
                {
@@ -39,7 +41,8 @@
                   "description": "number of products returned",
                   "required": false,
                   "schema": {
-                     "type": "integer"
+                     "type": "integer",
+                     "minimum": 0
                   }
                },
                {
@@ -48,7 +51,8 @@
                   "description": "maximum price of the matching product in local currency, filters results",
                   "required": false,
                   "schema": {
-                     "type": "integer"
+                     "type": "integer",
+                     "minimum": 0
                   }
                }
             ],
@@ -63,8 +67,20 @@
                      }
                   }
                },
+               "400": {
+                  "description": "Bad Request"
+               },
+               "429": {
+                  "description": "Too Many Requests"
+               },
+               "500": {
+                  "description": "Internal Server Error"
+               },
                "503": {
                   "description": "one or more services are unavailable"
+               },
+               "default": {
+                  "description": "Unexpected error"
                }
             },
             "deprecated": false
@@ -72,40 +88,65 @@
       }
    },
    "components": {
+      "securitySchemes": {
+         "bearerAuth": {
+            "type": "http",
+            "scheme": "bearer"
+         }
+      },
       "schemas": {
          "Product": {
             "type": "object",
+            "required": ["name", "price", "url"],
             "properties": {
                "attributes": {
                   "type": "array",
                   "items": {
-                     "type": "string"
-                  }
+                     "type": "string",
+                     "pattern": "^[A-Z0-9_-]{3,20}$",
+                     "maxLength": 128
+                  },
+                  "maxItems": 50
                },
                "name": {
-                  "type": "string"
+                  "type": "string",
+                  "pattern": "^[A-Z0-9_-]{3,20}$",
+                  "maxLength": 128
                },
                "price": {
-                  "type": "string"
+                  "type": "string",
+                  "pattern": "^[A-Z0-9_-]{3,20}$",
+                  "maxLength": 128
                },
                "url": {
-                  "type": "string"
+                  "type": "string",
+                  "pattern": "^[A-Z0-9_-]{3,20}$",
+                  "maxLength": 128
                }
             },
+            "additionalProperties": false,
             "title": "Product"
          },
          "ProductResponse": {
             "type": "object",
+            "required": ["products"],
             "properties": {
                "products": {
                   "type": "array",
                   "items": {
                      "$ref": "#/components/schemas/Product"
-                  }
+                  },
+                  "maxItems": 50
                }
             },
+            "additionalProperties": false,
             "title": "ProductResponse"
          }
       }
-   }
+   },
+   "security": [
+      {
+         "bearerAuth": []
+      }
+   ]
 }
