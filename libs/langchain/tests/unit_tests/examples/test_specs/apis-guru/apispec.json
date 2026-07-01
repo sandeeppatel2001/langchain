@@ -27,7 +27,11 @@
          "url": "https://api.apis.guru/v2"
       }
    ],
-   "security": [],
+   "security": [
+      {
+         "apiKey": []
+      }
+   ],
    "tags": [
       {
          "name": "APIs",
@@ -55,14 +59,27 @@
                                  "type": "array",
                                  "items": {
                                     "type": "string",
-                                    "minLength": 1
+                                    "minLength": 1,
+                                    "maxLength": 255,
+                                    "pattern": "^[a-zA-Z0-9._~-]+$"
                                  },
-                                 "minItems": 1
+                                 "minItems": 1,
+                                 "maxItems": 1000
                               }
-                           }
+                           },
+                           "additionalProperties": false
                         }
                      }
                   }
+               },
+               "400": {
+                  "description": "Bad Request"
+               },
+               "500": {
+                  "description": "Internal Server Error"
+               },
+               "default": {
+                  "description": "Unexpected error"
                }
             }
          }
@@ -90,6 +107,15 @@
                         }
                      }
                   }
+               },
+               "400": {
+                  "description": "Bad Request"
+               },
+               "500": {
+                  "description": "Internal Server Error"
+               },
+               "default": {
+                  "description": "Unexpected error"
                }
             }
          }
@@ -119,14 +145,27 @@
                                  "type": "array",
                                  "items": {
                                     "type": "string",
-                                    "minLength": 0
+                                    "minLength": 0,
+                                    "maxLength": 255,
+                                    "pattern": "^[a-zA-Z0-9._~-]+$"
                                  },
-                                 "minItems": 1
+                                 "minItems": 1,
+                                 "maxItems": 1000
                               }
-                           }
+                           },
+                           "additionalProperties": false
                         }
                      }
                   }
+               },
+               "400": {
+                  "description": "Bad Request"
+               },
+               "500": {
+                  "description": "Internal Server Error"
+               },
+               "default": {
+                  "description": "Unexpected error"
                }
             }
          }
@@ -157,6 +196,15 @@
                         }
                      }
                   }
+               },
+               "400": {
+                  "description": "Bad Request"
+               },
+               "500": {
+                  "description": "Internal Server Error"
+               },
+               "default": {
+                  "description": "Unexpected error"
                }
             }
          }
@@ -180,7 +228,8 @@
                   "schema": {
                      "type": "string",
                      "minLength": 1,
-                     "maxLength": 255
+                     "maxLength": 255,
+                     "pattern": "^[a-zA-Z0-9._~-]+$"
                   }
                },
                {
@@ -197,6 +246,15 @@
                         }
                      }
                   }
+               },
+               "400": {
+                  "description": "Bad Request"
+               },
+               "500": {
+                  "description": "Internal Server Error"
+               },
+               "default": {
+                  "description": "Unexpected error"
                }
             }
          }
@@ -219,6 +277,15 @@
                         }
                      }
                   }
+               },
+               "400": {
+                  "description": "Bad Request"
+               },
+               "500": {
+                  "description": "Internal Server Error"
+               },
+               "default": {
+                  "description": "Unexpected error"
                }
             }
          }
@@ -241,12 +308,28 @@
                         }
                      }
                   }
+               },
+               "400": {
+                  "description": "Bad Request"
+               },
+               "500": {
+                  "description": "Internal Server Error"
+               },
+               "default": {
+                  "description": "Unexpected error"
                }
             }
          }
       }
    },
    "components": {
+      "securitySchemes": {
+         "apiKey": {
+            "type": "apiKey",
+            "in": "header",
+            "name": "x-api-key"
+         }
+      },
       "schemas": {
          "APIs": {
             "description": "List of API details.\nIt is a JSON object with API IDs(`<provider>[:<service>]`) as keys.\n",
@@ -254,7 +337,15 @@
             "additionalProperties": {
                "$ref": "#/components/schemas/API"
             },
-            "minProperties": 1
+            "minProperties": 1,
+            "required": [
+               "api"
+            ],
+            "properties": {
+               "api": {
+                  "$ref": "#/components/schemas/API"
+               }
+            }
          },
          "API": {
             "description": "Meta information about API",
@@ -268,11 +359,14 @@
                "added": {
                   "description": "Timestamp when the API was first added to the directory",
                   "type": "string",
-                  "format": "date-time"
+                  "format": "date-time",
+                  "maxLength": 64
                },
                "preferred": {
                   "description": "Recommended version",
-                  "type": "string"
+                  "type": "string",
+                  "maxLength": 20,
+                  "pattern": "^[0-9]+(\\.[0-9]+)*$"
                },
                "versions": {
                   "description": "List of supported versions of the API",
@@ -299,41 +393,58 @@
                "added": {
                   "description": "Timestamp when the version was added",
                   "type": "string",
-                  "format": "date-time"
+                  "format": "date-time",
+                  "maxLength": 64
                },
                "updated": {
                   "description": "Timestamp when the version was updated",
                   "type": "string",
-                  "format": "date-time"
+                  "format": "date-time",
+                  "maxLength": 64
                },
                "swaggerUrl": {
                   "description": "URL to OpenAPI definition in JSON format",
                   "type": "string",
-                  "format": "url"
+                  "format": "url",
+                  "maxLength": 2048,
+                  "pattern": "^https?://"
                },
                "swaggerYamlUrl": {
                   "description": "URL to OpenAPI definition in YAML format",
                   "type": "string",
-                  "format": "url"
+                  "format": "url",
+                  "maxLength": 2048,
+                  "pattern": "^https?://"
                },
                "link": {
                   "description": "Link to the individual API entry for this API",
                   "type": "string",
-                  "format": "url"
+                  "format": "url",
+                  "maxLength": 2048,
+                  "pattern": "^https?://"
                },
                "info": {
                   "description": "Copy of `info` section from OpenAPI definition",
                   "type": "object",
-                  "minProperties": 1
+                  "minProperties": 1,
+                  "required": [
+                     "title",
+                     "version"
+                  ]
                },
                "externalDocs": {
                   "description": "Copy of `externalDocs` section from OpenAPI definition",
                   "type": "object",
-                  "minProperties": 1
+                  "minProperties": 1,
+                  "required": [
+                     "url"
+                  ]
                },
                "openapiVer": {
                   "description": "The value of the `openapi` or `swagger` property of the source definition",
-                  "type": "string"
+                  "type": "string",
+                  "maxLength": 20,
+                  "pattern": "^[0-9]+(\\.[0-9]+)*$"
                }
             },
             "additionalProperties": false
@@ -364,58 +475,76 @@
                },
                "unreachable": {
                   "description": "Number of unreachable (4XX,5XX status) APIs",
-                  "type": "integer"
+                  "type": "integer",
+                  "minimum": 0
                },
                "invalid": {
                   "description": "Number of newly invalid APIs",
-                  "type": "integer"
+                  "type": "integer",
+                  "minimum": 0
                },
                "unofficial": {
                   "description": "Number of unofficial APIs",
-                  "type": "integer"
+                  "type": "integer",
+                  "minimum": 0
                },
                "fixes": {
                   "description": "Total number of fixes applied across all APIs",
-                  "type": "integer"
+                  "type": "integer",
+                  "minimum": 0
                },
                "fixedPct": {
                   "description": "Percentage of all APIs where auto fixes have been applied",
-                  "type": "integer"
+                  "type": "integer",
+                  "minimum": 0
                },
                "datasets": {
                   "description": "Data used for charting etc",
                   "type": "array",
-                  "items": {}
+                  "items": {
+                     "type": "object"
+                  },
+                  "maxItems": 100
                },
                "stars": {
                   "description": "GitHub stars for our main repo",
-                  "type": "integer"
+                  "type": "integer",
+                  "minimum": 0
                },
                "issues": {
                   "description": "Open GitHub issues on our main repo",
-                  "type": "integer"
+                  "type": "integer",
+                  "minimum": 0
                },
                "thisWeek": {
                   "description": "Summary totals for the last 7 days",
                   "type": "object",
+                  "required": [
+                     "added",
+                     "updated"
+                  ],
                   "properties": {
                      "added": {
                         "description": "APIs added in the last week",
-                        "type": "integer"
+                        "type": "integer",
+                        "minimum": 0
                      },
                      "updated": {
                         "description": "APIs updated in the last week",
-                        "type": "integer"
+                        "type": "integer",
+                        "minimum": 0
                      }
                   }
                },
                "numDrivers": {
                   "description": "Number of methods of API retrieval",
-                  "type": "integer"
+                  "type": "integer",
+                  "minimum": 0
                },
                "numProviders": {
                   "description": "Number of API providers in directory",
-                  "type": "integer"
+                  "type": "integer",
+                  "minimum": 0
                }
             },
             "additionalProperties": false
@@ -429,7 +558,8 @@
             "schema": {
                "type": "string",
                "minLength": 1,
-               "maxLength": 255
+               "maxLength": 255,
+               "pattern": "^[a-zA-Z0-9._~-]+$"
             }
          },
          "api": {
@@ -439,7 +569,8 @@
             "schema": {
                "type": "string",
                "minLength": 1,
-               "maxLength": 255
+               "maxLength": 255,
+               "pattern": "^[a-zA-Z0-9._~-]+$"
             }
          }
       }
