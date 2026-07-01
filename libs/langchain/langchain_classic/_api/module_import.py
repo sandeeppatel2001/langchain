@@ -13,6 +13,21 @@ ALLOWED_TOP_LEVEL_PKGS = {
 }
 
 
+def _validate_module_path(module_path: str) -> None:
+    """Validate that a module path is safe to import."""
+    parts = module_path.split(".")
+    if parts[0] not in ALLOWED_TOP_LEVEL_PKGS:
+        msg = (
+            f"Importing from {module_path} is not allowed. "
+            f"Allowed top-level packages are: {ALLOWED_TOP_LEVEL_PKGS}"
+        )
+        raise AssertionError(msg)
+    for part in parts:
+        if not part.isidentifier():
+            msg = f"Invalid module path component: {part}"
+            raise AssertionError(msg)
+
+
 def create_importer(
     package: str,
     *,
@@ -62,12 +77,7 @@ def create_importer(
         # If not in interactive env, raise warning.
         if all_module_lookup and name in all_module_lookup:
             new_module = all_module_lookup[name]
-            if new_module.split(".")[0] not in ALLOWED_TOP_LEVEL_PKGS:
-                msg = (
-                    f"Importing from {new_module} is not allowed. "
-                    f"Allowed top-level packages are: {ALLOWED_TOP_LEVEL_PKGS}"
-                )
-                raise AssertionError(msg)
+            _validate_module_path(new_module)
 
             try:
                 module = importlib.import_module(new_module)
@@ -116,6 +126,7 @@ def create_importer(
             return result
 
         if fallback_module:
+            _validate_module_path(fallback_module)
             try:
                 module = importlib.import_module(fallback_module)
                 result = getattr(module, name)
