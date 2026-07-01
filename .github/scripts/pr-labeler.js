@@ -92,6 +92,24 @@ function init(github, owner, repo, config, core) {
     return { totalChanged, sizeLabel: getSizeLabel(totalChanged) };
   }
 
+  // ── Regex pattern validation ─────────────────────────────────────
+
+  function validateRegexPattern(pattern) {
+    // Limit pattern length to prevent overly complex regexes
+    if (pattern.length > 200) {
+      throw new Error(
+        `Pattern too long (${pattern.length} chars): "${pattern.slice(0, 50)}..." in rule pattern`
+      );
+    }
+    // Check for nested quantifiers which are a common ReDoS source
+    // (e.g., (a+)+, (a*)*) — groups with quantifiers inside quantified groups
+    if (/\([^)]*[+*][^)]*\)[+*?]/.test(pattern)) {
+      throw new Error(
+        `Pattern may be vulnerable to ReDoS (nested quantifiers): "${pattern}"`
+      );
+    }
+  }
+
   // ── File-based labels ─────────────────────────────────────────────
 
   function buildFileRules() {
@@ -101,6 +119,7 @@ function init(github, owner, repo, config, core) {
       else if (rule.suffix) test = p => p.endsWith(rule.suffix);
       else if (rule.exact) test = p => p === rule.exact;
       else if (rule.pattern) {
+        validateRegexPattern(rule.pattern);
         const re = new RegExp(rule.pattern);
         test = p => re.test(p);
       } else {
