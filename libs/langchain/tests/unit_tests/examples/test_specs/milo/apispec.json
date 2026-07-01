@@ -20,7 +20,9 @@
                   "in": "query",
                   "name": "query",
                   "schema": {
-                     "type": "string"
+                     "type": "string",
+                     "pattern": "^[a-zA-Z0-9 '?_-]{3,100}$",
+                     "maxLength": 128
                   },
                   "required": true,
                   "description": "This should always be 'what's magic today?'"
@@ -36,22 +38,49 @@
                         }
                      }
                   }
+               },
+               "400": {
+                  "description": "Bad Request"
+               },
+               "404": {
+                  "description": "Not Found"
+               },
+               "500": {
+                  "description": "Internal Server Error"
+               },
+               "default": {
+                  "description": "Unexpected error"
                }
             }
          }
       }
    },
    "components": {
+      "securitySchemes": {
+         "bearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT"
+         }
+      },
       "schemas": {
          "askMiloResponse": {
             "type": "object",
             "properties": {
                "answer": {
                   "type": "string",
+                  "pattern": "^[a-zA-Z0-9 .,!?'\"-]+$",
+                  "maxLength": 128,
                   "description": "A text response drawn from Milo's repository"
                }
-            }
+            },
+            "additionalProperties": false
          }
       }
-   }
+   },
+   "security": [
+      {
+         "bearerAuth": []
+      }
+   ]
 }
