@@ -12,6 +12,18 @@ def _call(cls: type[Embeddings], **kwargs: Any) -> Embeddings:
     return cls(**kwargs)
 
 
+_ALLOWED_MODULES: set[str] = {
+    "langchain_azure_ai.embeddings",
+    "langchain_openai",
+    "langchain_aws",
+    "langchain_cohere",
+    "langchain_google_genai",
+    "langchain_google_vertexai",
+    "langchain_huggingface",
+    "langchain_mistralai",
+    "langchain_ollama",
+}
+
 _BUILTIN_PROVIDERS: dict[str, tuple[str, str, Callable[..., Embeddings]]] = {
     "azure_ai": ("langchain_azure_ai.embeddings", "AzureAIOpenAIApiEmbeddingsModel", _call),
     "azure_openai": ("langchain_openai", "AzureOpenAIEmbeddings", _call),
@@ -82,6 +94,9 @@ def _get_embeddings_class_creator(provider: str) -> Callable[..., Embeddings]:
         raise ValueError(msg)
 
     module_name, class_name, creator_func = _BUILTIN_PROVIDERS[provider]
+    if module_name not in _ALLOWED_MODULES:
+        msg = f"Module '{module_name}' is not in the allowed modules list"
+        raise ValueError(msg)
     try:
         module = importlib.import_module(module_name)
     except ImportError as e:
