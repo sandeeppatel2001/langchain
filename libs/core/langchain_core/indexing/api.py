@@ -43,8 +43,8 @@ T = TypeVar("T")
 
 def _hash_string_to_uuid(input_string: str) -> str:
     """Hashes a string and returns the corresponding UUID."""
-    hash_value = hashlib.sha1(
-        input_string.encode("utf-8"), usedforsecurity=False
+    hash_value = hashlib.sha256(
+        input_string.encode("utf-8")
     ).hexdigest()
     return str(uuid.uuid5(NAMESPACE_UUID, hash_value))
 
@@ -159,8 +159,8 @@ def _calculate_hash(
 ) -> str:
     """Return a hexadecimal digest of *text* using *algorithm*."""
     if algorithm == "sha1":
-        # Calculate the SHA-1 hash and return it as a UUID.
-        digest = hashlib.sha1(text.encode("utf-8"), usedforsecurity=False).hexdigest()
+        # Calculate the SHA-256 hash and return it as a UUID.
+        digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
         return str(uuid.uuid5(NAMESPACE_UUID, digest))
     if algorithm == "blake2b":
         return hashlib.blake2b(text.encode("utf-8")).hexdigest()
