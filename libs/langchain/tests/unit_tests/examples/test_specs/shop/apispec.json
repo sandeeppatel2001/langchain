@@ -10,6 +10,11 @@
          "url": "https://server.shop.app"
       }
    ],
+   "security": [
+      {
+         "bearerAuth": []
+      }
+   ],
    "paths": {
       "/openai/search": {
          "get": {
@@ -22,7 +27,9 @@
                   "description": "Query string to search for items.",
                   "required": false,
                   "schema": {
-                     "type": "string"
+                     "type": "string",
+                     "pattern": "^[A-Z0-9_-]{3,20}$",
+                     "maxLength": 128
                   }
                },
                {
@@ -31,7 +38,8 @@
                   "description": "The minimum price to filter by.",
                   "required": false,
                   "schema": {
-                     "type": "number"
+                     "type": "number",
+                     "minimum": 0
                   }
                },
                {
@@ -40,7 +48,8 @@
                   "description": "The maximum price to filter by.",
                   "required": false,
                   "schema": {
-                     "type": "number"
+                     "type": "number",
+                     "minimum": 0
                   }
                },
                {
@@ -49,7 +58,9 @@
                   "description": "A product id that you want to find similar products for. (Only include one)",
                   "required": false,
                   "schema": {
-                     "type": "string"
+                     "type": "string",
+                     "pattern": "^[A-Z0-9_-]{3,20}$",
+                     "maxLength": 128
                   }
                },
                {
@@ -58,7 +69,9 @@
                   "description": "How many results to return. Defaults to 5. It can be a number between 1 and 10.",
                   "required": false,
                   "schema": {
-                     "type": "string"
+                     "type": "string",
+                     "pattern": "^[A-Z0-9_-]{3,20}$",
+                     "maxLength": 128
                   }
                }
             ],
@@ -73,8 +86,17 @@
                      }
                   }
                },
+               "400": {
+                  "description": "Bad Request"
+               },
+               "500": {
+                  "description": "Internal Server Error"
+               },
                "503": {
                   "description": "Service Unavailable"
+               },
+               "default": {
+                  "description": "Unexpected error"
                }
             }
          }
@@ -90,7 +112,9 @@
                   "description": "Comma separated list of product ids",
                   "required": true,
                   "schema": {
-                     "type": "string"
+                     "type": "string",
+                     "pattern": "^[A-Z0-9_-]{3,20}$",
+                     "maxLength": 128
                   }
                }
             ],
@@ -105,14 +129,30 @@
                      }
                   }
                },
+               "400": {
+                  "description": "Bad Request"
+               },
+               "500": {
+                  "description": "Internal Server Error"
+               },
                "503": {
                   "description": "Service Unavailable"
+               },
+               "default": {
+                  "description": "Unexpected error"
                }
             }
          }
       }
    },
    "components": {
+      "securitySchemes": {
+         "bearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT"
+         }
+      },
       "schemas": {
          "searchResponse": {
             "type": "object",
@@ -124,30 +164,41 @@
                      "properties": {
                         "title": {
                            "type": "string",
-                           "description": "The title of the product"
+                           "description": "The title of the product",
+                           "pattern": "^[A-Z0-9_-]{3,20}$",
+                           "maxLength": 128
                         },
                         "price": {
                            "type": "number",
                            "format": "string",
-                           "description": "The price of the product"
+                           "description": "The price of the product",
+                           "minimum": 0
                         },
                         "currency_code": {
                            "type": "string",
-                           "description": "The currency that the price is in"
+                           "description": "The currency that the price is in",
+                           "pattern": "^[A-Z0-9_-]{3,20}$",
+                           "maxLength": 128
                         },
                         "url": {
                            "type": "string",
-                           "description": "The url of the product page for this product"
+                           "description": "The url of the product page for this product",
+                           "pattern": "^[A-Z0-9_-]{3,20}$",
+                           "maxLength": 128
                         },
                         "description": {
                            "type": "string",
-                           "description": "The description of the product"
+                           "description": "The description of the product",
+                           "pattern": "^[A-Z0-9_-]{3,20}$",
+                           "maxLength": 128
                         }
                      },
                      "description": "The list of products matching the search"
-                  }
+                  },
+                  "maxItems": 50
                }
-            }
+            },
+            "additionalProperties": false
          }
       }
    }
