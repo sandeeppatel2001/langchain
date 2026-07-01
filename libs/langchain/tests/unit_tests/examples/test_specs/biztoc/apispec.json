@@ -20,7 +20,9 @@
                   "in": "query",
                   "name": "query",
                   "schema": {
-                     "type": "string"
+                     "type": "string",
+                     "pattern": "^[A-Z0-9_-]{3,20}$",
+                     "maxLength": 128
                   },
                   "description": "Used to query news articles on their title and body. For example, ?query=apple will return news stories that have 'apple' in their title or body."
                }
@@ -28,9 +30,32 @@
             "responses": {
                "200": {
                   "description": "OK"
+               },
+               "400": {
+                  "description": "Bad Request"
+               },
+               "500": {
+                  "description": "Internal Server Error"
+               },
+               "default": {
+                  "description": "Unexpected error"
                }
             }
          }
       }
-   }
+   },
+   "components": {
+      "securitySchemes": {
+         "bearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT"
+         }
+      }
+   },
+   "security": [
+      {
+         "bearerAuth": []
+      }
+   ]
 }
