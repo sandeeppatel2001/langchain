@@ -10,6 +10,20 @@
          "url": "https://datasette.io"
       }
    ],
+   "components": {
+      "securitySchemes": {
+         "apiKey": {
+            "type": "apiKey",
+            "in": "header",
+            "name": "X-API-Key"
+         }
+      }
+   },
+   "security": [
+      {
+         "apiKey": []
+      }
+   ],
    "paths": {
       "/content.json": {
          "get": {
@@ -23,7 +37,9 @@
                   "description": "The SQL query to be executed",
                   "required": true,
                   "schema": {
-                     "type": "string"
+                     "type": "string",
+                     "pattern": "^.+$",
+                     "maxLength": 8192
                   }
                },
                {
@@ -48,7 +64,8 @@
                            "type": "array",
                            "items": {
                               "type": "object"
-                           }
+                           },
+                           "maxItems": 100
                         }
                      }
                   }
@@ -56,8 +73,20 @@
                "400": {
                   "description": "Bad request"
                },
+               "401": {
+                  "description": "Unauthorized"
+               },
+               "403": {
+                  "description": "Forbidden"
+               },
+               "429": {
+                  "description": "Rate limit exceeded"
+               },
                "500": {
                   "description": "Internal server error"
+               },
+               "default": {
+                  "description": "Unexpected error"
                }
             }
          }
