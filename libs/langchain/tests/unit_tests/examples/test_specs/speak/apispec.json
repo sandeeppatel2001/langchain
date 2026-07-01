@@ -10,6 +10,11 @@
          "url": "https://api.speak.com"
       }
    ],
+   "security": [
+      {
+         "bearerAuth": []
+      }
+   ],
    "paths": {
       "/v1/public/openai/translate": {
          "post": {
@@ -35,6 +40,15 @@
                         }
                      }
                   }
+               },
+               "400": {
+                  "description": "Bad Request"
+               },
+               "500": {
+                  "description": "Internal Server Error"
+               },
+               "default": {
+                  "description": "Unexpected error"
                }
             }
          }
@@ -63,6 +77,15 @@
                         }
                      }
                   }
+               },
+               "400": {
+                  "description": "Bad Request"
+               },
+               "500": {
+                  "description": "Internal Server Error"
+               },
+               "default": {
+                  "description": "Unexpected error"
                }
             }
          }
@@ -91,126 +114,189 @@
                         }
                      }
                   }
+               },
+               "400": {
+                  "description": "Bad Request"
+               },
+               "500": {
+                  "description": "Internal Server Error"
+               },
+               "default": {
+                  "description": "Unexpected error"
                }
             }
          }
       }
    },
    "components": {
+      "securitySchemes": {
+         "bearerAuth": {
+            "type": "http",
+            "scheme": "bearer"
+         }
+      },
       "schemas": {
          "translateRequest": {
             "type": "object",
+            "required": [
+               "phrase_to_translate",
+               "learning_language",
+               "native_language",
+               "additional_context",
+               "full_query"
+            ],
+            "additionalProperties": false,
             "properties": {
                "phrase_to_translate": {
                   "type": "string",
-                  "required": true,
+                  "pattern": "^[\\s\\S]+$",
+                  "maxLength": 1000,
                   "description": "Phrase or concept to translate into the foreign language and explain further."
                },
                "learning_language": {
                   "type": "string",
-                  "required": true,
+                  "pattern": "^[A-Za-z\\s]+$",
+                  "maxLength": 100,
                   "description": "The foreign language that the user is learning and asking about. Always use the full name of the language (e.g. Spanish, French)."
                },
                "native_language": {
                   "type": "string",
-                  "required": true,
+                  "pattern": "^[A-Za-z\\s]+$",
+                  "maxLength": 100,
                   "description": "The user's native language. Infer this value from the language the user asked their question in. Always use the full name of the language (e.g. Spanish, French)."
                },
                "additional_context": {
                   "type": "string",
-                  "required": true,
+                  "pattern": "^[\\s\\S]+$",
+                  "maxLength": 2000,
                   "description": "A description of any additional context in the user's question that could affect the explanation - e.g. setting, scenario, situation, tone, speaking style and formality, usage notes, or any other qualifiers."
                },
                "full_query": {
                   "type": "string",
-                  "required": true,
+                  "pattern": "^[\\s\\S]+$",
+                  "maxLength": 2000,
                   "description": "Full text of the user's question."
                }
             }
          },
          "translateResponse": {
             "type": "object",
+            "additionalProperties": false,
             "properties": {
                "explanation": {
                   "type": "string",
+                  "pattern": "^[\\s\\S]+$",
+                  "maxLength": 5000,
                   "description": "An explanation of how to say the input phrase in the foreign language."
                }
             }
          },
          "explainPhraseRequest": {
             "type": "object",
+            "required": [
+               "foreign_phrase",
+               "learning_language",
+               "native_language",
+               "additional_context",
+               "full_query"
+            ],
+            "additionalProperties": false,
             "properties": {
                "foreign_phrase": {
                   "type": "string",
-                  "required": true,
+                  "pattern": "^[\\s\\S]+$",
+                  "maxLength": 1000,
                   "description": "Foreign language phrase or word that the user wants an explanation for."
                },
                "learning_language": {
                   "type": "string",
-                  "required": true,
+                  "pattern": "^[A-Za-z\\s]+$",
+                  "maxLength": 100,
                   "description": "The language that the user is asking their language question about. The value can be inferred from question - e.g. for \"Somebody said no mames to me, what does that mean\", the value should be \"Spanish\" because \"no mames\" is a Spanish phrase. Always use the full name of the language (e.g. Spanish, French)."
                },
                "native_language": {
                   "type": "string",
-                  "required": true,
+                  "pattern": "^[A-Za-z\\s]+$",
+                  "maxLength": 100,
                   "description": "The user's native language. Infer this value from the language the user asked their question in. Always use the full name of the language (e.g. Spanish, French)."
                },
                "additional_context": {
                   "type": "string",
-                  "required": true,
+                  "pattern": "^[\\s\\S]+$",
+                  "maxLength": 2000,
                   "description": "A description of any additional context in the user's question that could affect the explanation - e.g. setting, scenario, situation, tone, speaking style and formality, usage notes, or any other qualifiers."
                },
                "full_query": {
                   "type": "string",
-                  "required": true,
+                  "pattern": "^[\\s\\S]+$",
+                  "maxLength": 2000,
                   "description": "Full text of the user's question."
                }
             }
          },
          "explainPhraseResponse": {
             "type": "object",
+            "additionalProperties": false,
             "properties": {
                "explanation": {
                   "type": "string",
+                  "pattern": "^[\\s\\S]+$",
+                  "maxLength": 5000,
                   "description": "An explanation of what the foreign language phrase means, and when you might use it."
                }
             }
          },
          "explainTaskRequest": {
             "type": "object",
+            "required": [
+               "task_description",
+               "learning_language",
+               "native_language",
+               "additional_context",
+               "full_query"
+            ],
+            "additionalProperties": false,
             "properties": {
                "task_description": {
                   "type": "string",
-                  "required": true,
+                  "pattern": "^[\\s\\S]+$",
+                  "maxLength": 1000,
                   "description": "Description of the task that the user wants to accomplish or do. For example, \"tell the waiter they messed up my order\" or \"compliment someone on their shirt\""
                },
                "learning_language": {
                   "type": "string",
-                  "required": true,
+                  "pattern": "^[A-Za-z\\s]+$",
+                  "maxLength": 100,
                   "description": "The foreign language that the user is learning and asking about. The value can be inferred from question - for example, if the user asks \"how do i ask a girl out in mexico city\", the value should be \"Spanish\" because of Mexico City. Always use the full name of the language (e.g. Spanish, French)."
                },
                "native_language": {
                   "type": "string",
-                  "required": true,
+                  "pattern": "^[A-Za-z\\s]+$",
+                  "maxLength": 100,
                   "description": "The user's native language. Infer this value from the language the user asked their question in. Always use the full name of the language (e.g. Spanish, French)."
                },
                "additional_context": {
                   "type": "string",
-                  "required": true,
+                  "pattern": "^[\\s\\S]+$",
+                  "maxLength": 2000,
                   "description": "A description of any additional context in the user's question that could affect the explanation - e.g. setting, scenario, situation, tone, speaking style and formality, usage notes, or any other qualifiers."
                },
                "full_query": {
                   "type": "string",
-                  "required": true,
+                  "pattern": "^[\\s\\S]+$",
+                  "maxLength": 2000,
                   "description": "Full text of the user's question."
                }
             }
          },
          "explainTaskResponse": {
             "type": "object",
+            "additionalProperties": false,
             "properties": {
                "explanation": {
                   "type": "string",
+                  "pattern": "^[\\s\\S]+$",
+                  "maxLength": 5000,
                   "description": "An explanation of the best thing to say in the foreign language to accomplish the task described in the user's question."
                }
             }
