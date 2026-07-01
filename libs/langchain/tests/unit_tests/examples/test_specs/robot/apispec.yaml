@@ -24,24 +24,30 @@ components:
             $ref: "#/components/schemas/ValidationError"
           title: Detail
           type: array
+          maxItems: 50
       title: HTTPValidationError
       type: object
+      additionalProperties: false
     PublicCues:
       description: A public cue. Used for testing recursive definitions.
       properties:
         cue:
           title: Cue
           type: string
+          pattern: "^[A-Z0-9_-]{3,20}$"
+          maxLength: 128
         other_cues:
           items:
             $ref: "#/components/schemas/PublicCues"
           title: Other Cues
           type: array
+          maxItems: 50
       required:
         - cue
         - other_cues
       title: PublicCues
       type: object
+      additionalProperties: false
     SecretPassPhrase:
       description: A secret pass phrase.
       properties:
@@ -50,14 +56,18 @@ components:
             $ref: "#/components/schemas/PublicCues"
           title: Public
           type: array
+          maxItems: 50
         pw:
           title: Pw
           type: string
+          pattern: "^[A-Z0-9_-]{3,20}$"
+          maxLength: 128
       required:
         - public
         - pw
       title: SecretPassPhrase
       type: object
+      additionalProperties: false
     StateItems:
       description: An enumeration.
       enum:
@@ -88,18 +98,24 @@ components:
               - type: integer
           title: Location
           type: array
+          maxItems: 50
         msg:
           title: Message
           type: string
+          pattern: "^[A-Z0-9_-]{3,20}$"
+          maxLength: 128
         type:
           title: Error Type
           type: string
+          pattern: "^[A-Z0-9_-]{3,20}$"
+          maxLength: 128
       required:
         - loc
         - msg
         - type
       title: ValidationError
       type: object
+      additionalProperties: false
     WalkInput:
       description: Input for walking.
       properties:
@@ -110,6 +126,7 @@ components:
         speed:
           title: Speed
           type: number
+          minimum: 0
         style_or_cautiousness:
           anyOf:
             - $ref: "#/components/schemas/Style"
@@ -120,6 +137,12 @@ components:
         - style_or_cautiousness
       title: WalkInput
       type: object
+      additionalProperties: false
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
 info:
   description: This is an Android Robot API with different endpoints for robot operations
   title: Android Robot API
@@ -142,6 +165,8 @@ paths:
           schema:
             title: Query
             type: string
+            pattern: "^[A-Z0-9_-]{3,20}$"
+            maxLength: 128
       responses:
         "200":
           content:
@@ -149,13 +174,20 @@ paths:
               schema:
                 title: Response Ask For Help Ask For Help Post
                 type: object
+                additionalProperties: false
           description: Successful Response
+        "400":
+          description: Bad Request
         "422":
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/HTTPValidationError"
           description: Validation Error
+        "500":
+          description: Internal Server Error
+        default:
+          description: Unexpected error
       summary: Ask For Help
   /ask_for_passphrase:
     get:
@@ -175,13 +207,20 @@ paths:
               schema:
                 title: Response Ask For Passphrase Ask For Passphrase Get
                 type: object
+                additionalProperties: false
           description: Successful Response
+        "400":
+          description: Bad Request
         "422":
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/HTTPValidationError"
           description: Validation Error
+        "500":
+          description: Internal Server Error
+        default:
+          description: Unexpected error
       summary: Ask For Passphrase
   /get_state:
     get:
@@ -197,6 +236,7 @@ paths:
             items:
               $ref: "#/components/schemas/StateItems"
             type: array
+            maxItems: 50
       responses:
         "200":
           content:
@@ -204,13 +244,20 @@ paths:
               schema:
                 title: Response Get State Get State Get
                 type: object
+                additionalProperties: false
           description: Successful Response
+        "400":
+          description: Bad Request
         "422":
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/HTTPValidationError"
           description: Validation Error
+        "500":
+          description: Internal Server Error
+        default:
+          description: Unexpected error
       summary: Get State
   /goto/{x}/{y}/{z}:
     post:
@@ -223,18 +270,21 @@ paths:
           schema:
             title: X
             type: integer
+            minimum: 0
         - in: path
           name: y
           required: true
           schema:
             title: Y
             type: integer
+            minimum: 0
         - in: path
           name: z
           required: true
           schema:
             title: Z
             type: integer
+            minimum: 0
         - in: query
           name: cautiousness
           required: true
@@ -247,13 +297,20 @@ paths:
               schema:
                 title: Response Goto Goto  X   Y   Z  Post
                 type: object
+                additionalProperties: false
           description: Successful Response
+        "400":
+          description: Bad Request
         "422":
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/HTTPValidationError"
           description: Validation Error
+        "500":
+          description: Internal Server Error
+        default:
+          description: Unexpected error
       summary: Goto
   /recycle:
     delete:
@@ -274,13 +331,20 @@ paths:
               schema:
                 title: Response Recycle Recycle Delete
                 type: object
+                additionalProperties: false
           description: Successful Response
+        "400":
+          description: Bad Request
         "422":
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/HTTPValidationError"
           description: Validation Error
+        "500":
+          description: Internal Server Error
+        default:
+          description: Unexpected error
       summary: Recycle
   /walk:
     post:
@@ -301,13 +365,22 @@ paths:
               schema:
                 title: Response Walk Walk Post
                 type: object
+                additionalProperties: false
           description: Successful Response
+        "400":
+          description: Bad Request
         "422":
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/HTTPValidationError"
           description: Validation Error
+        "500":
+          description: Internal Server Error
+        default:
+          description: Unexpected error
       summary: Walk
+security:
+  - bearerAuth: []
 servers:
-  - url: http://localhost:7289
+  - url: https://localhost:7289
