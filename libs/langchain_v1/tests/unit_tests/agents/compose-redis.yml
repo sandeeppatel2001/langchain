@@ -2,6 +2,11 @@ name: langgraph-tests-redis
 services:
   redis-test:
     image: redis:7-alpine
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+      - seccomp:default
     ports:
       - "6379:6379"
     command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
