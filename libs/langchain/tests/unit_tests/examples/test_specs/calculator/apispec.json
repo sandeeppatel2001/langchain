@@ -36,7 +36,8 @@
                   "in": "path",
                   "name": "a",
                   "schema": {
-                     "type": "number"
+                     "type": "number",
+                     "minimum": 0
                   },
                   "required": true,
                   "description": "The first operand."
@@ -45,7 +46,8 @@
                   "in": "path",
                   "name": "b",
                   "schema": {
-                     "type": "number"
+                     "type": "number",
+                     "minimum": 0
                   },
                   "required": true,
                   "description": "The second operand."
@@ -61,6 +63,15 @@
                         }
                      }
                   }
+               },
+               "400": {
+                  "description": "Bad Request"
+               },
+               "500": {
+                  "description": "Internal Server Error"
+               },
+               "default": {
+                  "description": "Unexpected error"
                }
             }
          }
@@ -74,7 +85,8 @@
                   "in": "path",
                   "name": "a",
                   "schema": {
-                     "type": "number"
+                     "type": "number",
+                     "minimum": 0
                   },
                   "required": true,
                   "description": "The number to find the square root of."
@@ -90,22 +102,45 @@
                         }
                      }
                   }
+               },
+               "400": {
+                  "description": "Bad Request"
+               },
+               "500": {
+                  "description": "Internal Server Error"
+               },
+               "default": {
+                  "description": "Unexpected error"
                }
             }
          }
       }
    },
    "components": {
+      "securitySchemes": {
+         "bearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT"
+         }
+      },
       "schemas": {
          "calculateResponse": {
             "type": "object",
             "properties": {
                "result": {
                   "type": "number",
+                  "minimum": 0,
                   "description": "The result of the calculation."
                }
-            }
+            },
+            "additionalProperties": false
          }
       }
-   }
+   },
+   "security": [
+      {
+         "bearerAuth": []
+      }
+   ]
 }
