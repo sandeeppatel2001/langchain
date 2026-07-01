@@ -14,44 +14,70 @@
       "/askMilo": {
          "get": {
             "operationId": "askMilo",
-            "summary": "Get daily suggestions from Milo about how to create a magical moment or meaningful memory for parents. Milo can only answer 'what's magic today?'",
-            "parameters": [
-               {
-                  "in": "query",
-                  "name": "query",
-                  "schema": {
-                     "type": "string"
-                  },
-                  "required": true,
-                  "description": "This should always be 'what's magic today?'"
-               }
-            ],
-            "responses": {
-               "200": {
-                  "description": "OK",
-                  "content": {
-                     "application/json": {
-                        "schema": {
-                           "$ref": "#/components/schemas/askMiloResponse"
-                        }
-                     }
-                  }
-               }
-            }
+             "summary": "Get daily suggestions from Milo about how to create a magical moment or meaningful memory for parents. Milo can only answer 'what's magic today?'",
+             "parameters": [
+                {
+                   "in": "query",
+                   "name": "query",
+                   "schema": {
+                      "type": "string",
+                      "pattern": "^[A-Za-z0-9 '?]{3,200}$",
+                      "maxLength": 200
+                   },
+                   "required": true,
+                   "description": "This should always be 'what's magic today?'"
+                }
+             ],
+             "responses": {
+                "200": {
+                   "description": "OK",
+                   "content": {
+                      "application/json": {
+                         "schema": {
+                            "$ref": "#/components/schemas/askMiloResponse"
+                         }
+                      }
+                   }
+                },
+                "400": {
+                   "description": "Bad Request"
+                },
+                "500": {
+                   "description": "Internal Server Error"
+                },
+                "default": {
+                   "description": "Unexpected error"
+                }
+             }
          }
       }
    },
+   "security": [
+      {
+         "bearerAuth": []
+      }
+   ],
    "components": {
-      "schemas": {
-         "askMiloResponse": {
-            "type": "object",
-            "properties": {
-               "answer": {
-                  "type": "string",
-                  "description": "A text response drawn from Milo's repository"
-               }
-            }
+      "securitySchemes": {
+         "bearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT"
          }
+      },
+      "schemas": {
+          "askMiloResponse": {
+             "type": "object",
+             "properties": {
+                "answer": {
+                   "type": "string",
+                   "pattern": "^[A-Za-z0-9 .,!?'-]{1,1000}$",
+                   "maxLength": 1000,
+                   "description": "A text response drawn from Milo's repository"
+                }
+             },
+             "additionalProperties": false
+          }
       }
    }
 }
