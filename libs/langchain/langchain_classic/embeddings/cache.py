@@ -12,7 +12,6 @@ from __future__ import annotations
 import hashlib
 import json
 import uuid
-import warnings
 from collections.abc import Callable, Sequence
 from typing import Literal, cast
 
@@ -25,19 +24,11 @@ from langchain_classic.storage.encoder_backed import EncoderBackedStore
 NAMESPACE_UUID = uuid.UUID(int=1985)
 
 
-def _sha1_hash_to_uuid(text: str) -> uuid.UUID:
-    """Return a UUID derived from *text* using SHA-1 (deterministic).
-
-    Deterministic and fast, **but not collision-resistant**.
-
-    A malicious attacker could try to create two different texts that hash to the same
-    UUID. This may not necessarily be an issue in the context of caching embeddings,
-    but new applications should swap this out for a stronger hash function like
-    xxHash, BLAKE2 or SHA-256, which are collision-resistant.
-    """
-    sha1_hex = hashlib.sha1(text.encode("utf-8"), usedforsecurity=False).hexdigest()
+def _hash_to_uuid(text: str) -> uuid.UUID:
+    """Return a UUID derived from *text* using SHA-256 (deterministic)."""
+    sha256_hex = hashlib.sha256(text.encode("utf-8")).hexdigest()
     # Embed the hex string in `uuid5` to obtain a valid UUID.
-    return uuid.uuid5(NAMESPACE_UUID, sha1_hex)
+    return uuid.uuid5(NAMESPACE_UUID, sha256_hex)
 
 
 def _make_default_key_encoder(namespace: str, algorithm: str) -> Callable[[str], str]:
@@ -46,25 +37,22 @@ def _make_default_key_encoder(namespace: str, algorithm: str) -> Callable[[str],
     Args:
         namespace: Prefix that segregates keys from different embedding models.
         algorithm:
-           * `'sha1'` - fast but not collision-resistant
-           * `'blake2b'` - cryptographically strong, faster than SHA-1
-           * `'sha256'` - cryptographically strong, slower than SHA-1
-           * `'sha512'` - cryptographically strong, slower than SHA-1
+           * `'sha1'` - alias for SHA-256 (kept for backward compatibility)
+           * `'sha256'` - cryptographically strong, collision-resistant
+           * `'blake2b'` - cryptographically strong, faster than SHA-256
+           * `'sha512'` - cryptographically strong, slower than SHA-256
 
     Returns:
         A function that encodes a key using the specified algorithm.
     """
-    if algorithm == "sha1":
-        _warn_about_sha1_encoder()
-
     def _key_encoder(key: str) -> str:
         """Encode a key using the specified algorithm."""
         if algorithm == "sha1":
-            return f"{namespace}{_sha1_hash_to_uuid(key)}"
-        if algorithm == "blake2b":
-            return f"{namespace}{hashlib.blake2b(key.encode('utf-8')).hexdigest()}"
+            return f"{namespace}{_hash_to_uuid(key)}"
         if algorithm == "sha256":
             return f"{namespace}{hashlib.sha256(key.encode('utf-8')).hexdigest()}"
+        if algorithm == "blake2b":
+            return f"{namespace}{hashlib.blake2b(key.encode('utf-8')).hexdigest()}"
         if algorithm == "sha512":
             return f"{namespace}{hashlib.sha512(key.encode('utf-8')).hexdigest()}"
         msg = f"Unsupported algorithm: {algorithm}"
@@ -81,28 +69,6 @@ def _value_serializer(value: Sequence[float]) -> bytes:
 def _value_deserializer(serialized_value: bytes) -> list[float]:
     """Deserialize a value."""
     return cast("list[float]", json.loads(serialized_value.decode()))
-
-
-# The warning is global; track emission, so it appears only once.
-_warned_about_sha1: bool = False
-
-
-def _warn_about_sha1_encoder() -> None:
-    """Emit a one-time warning about SHA-1 collision weaknesses."""
-    global _warned_about_sha1  # noqa: PLW0603
-    if not _warned_about_sha1:
-        warnings.warn(
-            "Using default key encoder: SHA-1 is *not* collision-resistant. "
-            "While acceptable for most cache scenarios, a motivated attacker "
-            "can craft two different payloads that map to the same cache key. "
-            "If that risk matters in your environment, supply a stronger "
-            "encoder (e.g. SHA-256 or BLAKE2) via the `key_encoder` argument. "
-            "If you change the key encoder, consider also creating a new cache, "
-            "to avoid (the potential for) collisions with existing keys.",
-            category=UserWarning,
-            stacklevel=2,
-        )
-        _warned_about_sha1 = True
 
 
 class CacheBackedEmbeddings(Embeddings):
@@ -294,7 +260,7 @@ class CacheBackedEmbeddings(Embeddings):
         batch_size: int | None = None,
         query_embedding_cache: bool | ByteStore = False,
         key_encoder: Callable[[str], str]
-        | Literal["sha1", "blake2b", "sha256", "sha512"] = "sha1",
+        | Literal["sha1", "blake2b", "sha256", "sha512"] = "sha256",
     ) -> CacheBackedEmbeddings:
         """On-ramp that adds the necessary serialization and encoding to the store.
 
@@ -309,15 +275,9 @@ class CacheBackedEmbeddings(Embeddings):
             query_embedding_cache: The cache to use for storing query embeddings.
                 True to use the same cache as document embeddings.
                 False to not cache query embeddings.
-            key_encoder: Optional callable to encode keys. If not provided,
-                a default encoder using SHA-1 will be used. SHA-1 is not
-                collision-resistant, and a motivated attacker could craft two
-                different texts that hash to the same cache key.
-
-                New applications should use one of the alternative encoders
-                or provide a custom and strong key encoder function to avoid this risk.
-
-                If you change a key encoder in an existing cache, consider
+            key_encoder: Optional callable or algorithm name to encode keys.
+                Defaults to `'sha256'` (or `'sha1'` as a backward-compatible alias).
+                If you change the key encoder in an existing cache, consider
                 just creating a new cache, to avoid (the potential for)
                 collisions with existing keys or having duplicate keys
                 for the same text in the cache.
@@ -339,7 +299,7 @@ class CacheBackedEmbeddings(Embeddings):
                 raise ValueError(msg)
         else:
             msg = (  # type: ignore[unreachable]
-                "key_encoder must be either 'blake2b', 'sha1', 'sha256', 'sha512' "
+                "key_encoder must be either 'sha256', 'blake2b', 'sha512' "
                 "or a callable that encodes keys."
             )
             raise ValueError(msg)  # noqa: TRY004
