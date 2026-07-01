@@ -1,4 +1,8 @@
 from importlib import import_module
+import re
+
+_MODULE_NAME_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*$")
+_ATTR_NAME_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 
 
 def import_attr(
@@ -21,10 +25,14 @@ def import_attr(
     Raises:
         ImportError: If the module cannot be found.
         AttributeError: If the attribute does not exist in the module or package.
+        ValueError: If `attr_name` or `module_name` is not a valid Python identifier.
 
     Returns:
         The imported attribute.
     """
+    if not _ATTR_NAME_RE.match(attr_name):
+        msg = f"'{attr_name}' is not a valid attribute name"
+        raise ValueError(msg)
     if module_name == "__module__" or module_name is None:
         try:
             result = import_module(f".{attr_name}", package=package)
@@ -32,6 +40,9 @@ def import_attr(
             msg = f"module '{package!r}' has no attribute {attr_name!r}"
             raise AttributeError(msg) from None
     else:
+        if not _MODULE_NAME_RE.match(module_name):
+            msg = f"'{module_name}' is not a valid module name"
+            raise ValueError(msg)
         try:
             module = import_module(f".{module_name}", package=package)
         except ModuleNotFoundError as err:
