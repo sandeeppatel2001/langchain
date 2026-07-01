@@ -113,7 +113,14 @@ def _import_module(module: str, class_name: str) -> ModuleType:
     Raises:
         ImportError: If the module cannot be imported, with a message suggesting
             the pip package to install.
+        ValueError: If the module is not a recognised langchain integration package.
     """
+    if not module.startswith("langchain_"):
+        msg = (
+            f"Initializing {class_name} requires a supported langchain integration "
+            f"package, got unsupported module {module!r}."
+        )
+        raise ValueError(msg)
     try:
         return importlib.import_module(module)
     except ImportError as e:
