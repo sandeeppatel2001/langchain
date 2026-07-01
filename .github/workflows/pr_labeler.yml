@@ -18,7 +18,7 @@
 # 2. Install the app on your organization and this repository
 # 3. Add these repository secrets:
 #    - ORG_MEMBERSHIP_APP_ID: Your app's ID
-#    - ORG_MEMBERSHIP_APP_PRIVATE_KEY: Your app's private key
+#    - ORG_MEMBERSHIP_APP_PRIVATE_KEY: <github-app-private-key>
 #
 # The GitHub App token is required to check private organization membership
 # and to propagate label events to downstream workflows.
