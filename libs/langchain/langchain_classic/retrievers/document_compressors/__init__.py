@@ -27,11 +27,11 @@ _module_lookup = {
 
 
 def __getattr__(name: str) -> Any:
-    if name in _module_lookup:
-        module = importlib.import_module(_module_lookup[name])
-        return getattr(module, name)
-    msg = f"module {__name__} has no attribute {name}"
-    raise AttributeError(msg)
+    if name not in _module_lookup:
+        msg = f"module {__name__} has no attribute {name}"
+        raise AttributeError(msg)
+    module = importlib.import_module(_module_lookup[name])
+    return getattr(module, name)
 
 
 __all__ = [
