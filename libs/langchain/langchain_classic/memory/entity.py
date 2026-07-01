@@ -463,7 +463,7 @@ class SQLiteEntityStore(BaseEntityStore):
     def clear(self) -> None:
         # Ignore S608 since we validate for malicious table/session names in `__init__`
         query = f"""
-            DELETE FROM {self.full_table_name}
+            DELETE FROM "{self.full_table_name}"
         """  # noqa: S608
         with self.conn:
             self.conn.execute(query)
