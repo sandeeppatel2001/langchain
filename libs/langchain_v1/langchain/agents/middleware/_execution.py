@@ -32,20 +32,21 @@ def _launch_subprocess(
     preexec_fn: typing.Callable[[], None] | None,
     start_new_session: bool,
 ) -> subprocess.Popen[str]:
-    return subprocess.Popen(  # noqa: S603
-        list(command),
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        cwd=cwd,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        bufsize=1,
-        env=env,
-        preexec_fn=preexec_fn,  # noqa: PLW1509
-        start_new_session=start_new_session,
-    )
+    popen_kwargs: dict[str, typing.Any] = {
+        "stdin": subprocess.PIPE,
+        "stdout": subprocess.PIPE,
+        "stderr": subprocess.PIPE,
+        "cwd": cwd,
+        "text": True,
+        "encoding": "utf-8",
+        "bufsize": 1,
+        "env": env,
+        "preexec_fn": preexec_fn,  # noqa: PLW1509
+        "start_new_session": start_new_session,
+    }
+    if sys.version_info >= (3, 6):
+        popen_kwargs["errors"] = "replace"
+    return subprocess.Popen(list(command), **popen_kwargs)  # noqa: S603
 
 
 if typing.TYPE_CHECKING:
