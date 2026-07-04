@@ -33,25 +33,30 @@ _BUILTIN_PROVIDERS: dict[str, tuple[str, str, Callable[..., Embeddings]]] = {
     "openai": ("langchain_openai", "OpenAIEmbeddings", _call),
 }
 """Registry mapping provider names to their import configuration.
+ 
+ Each entry maps a provider key to a tuple of:
+ 
+ - `module_path`: The Python module path containing the embeddings class.
+ - `class_name`: The name of the embeddings class to import.
+ - `creator_func`: A callable that instantiates the class with provided kwargs.
+ 
+ !!! note
+ 
+     This dict is not exhaustive of all providers supported by LangChain, but is
+     meant to cover the most popular ones and serve as a template for adding more
+     providers in the future. If a provider is not in this dict, it can still be
+     used with `init_chat_model` as long as its integration package is installed,
+     but the provider key will not be inferred from the model name and must be
+     specified explicitly via the `model_provider` parameter.
+ 
+     Refer to the LangChain [integration documentation](https://docs.langchain.com/oss/python/integrations/providers/overview)
+     for a full list of supported providers and their corresponding packages.
+ """
 
-Each entry maps a provider key to a tuple of:
 
-- `module_path`: The Python module path containing the embeddings class.
-- `class_name`: The name of the embeddings class to import.
-- `creator_func`: A callable that instantiates the class with provided kwargs.
-
-!!! note
-
-    This dict is not exhaustive of all providers supported by LangChain, but is
-    meant to cover the most popular ones and serve as a template for adding more
-    providers in the future. If a provider is not in this dict, it can still be
-    used with `init_chat_model` as long as its integration package is installed,
-    but the provider key will not be inferred from the model name and must be
-    specified explicitly via the `model_provider` parameter.
-
-    Refer to the LangChain [integration documentation](https://docs.langchain.com/oss/python/integrations/providers/overview)
-    for a full list of supported providers and their corresponding packages.
-"""
+_ALLOWED_MODULES: frozenset[str] = frozenset(
+    module_path for module_path, _, _ in _BUILTIN_PROVIDERS.values()
+)
 
 
 @functools.lru_cache(maxsize=len(_BUILTIN_PROVIDERS))
@@ -82,6 +87,9 @@ def _get_embeddings_class_creator(provider: str) -> Callable[..., Embeddings]:
         raise ValueError(msg)
 
     module_name, class_name, creator_func = _BUILTIN_PROVIDERS[provider]
+    if module_name not in _ALLOWED_MODULES:
+        msg = f"Module '{module_name}' is not in the allowed modules list"
+        raise ValueError(msg)
     try:
         module = importlib.import_module(module_name)
     except ImportError as e:
