@@ -2,11 +2,9 @@
 
 import contextlib
 import re
-import xml
 import xml.etree.ElementTree as ET
 from collections.abc import AsyncIterator, Iterator
 from typing import Any, Literal
-from xml.etree.ElementTree import TreeBuilder
 
 from typing_extensions import override
 
@@ -17,10 +15,12 @@ from langchain_core.runnables.utils import AddableDict
 
 try:
     from defusedxml import ElementTree  # type: ignore[import-untyped]
-    from defusedxml.ElementTree import XMLParser  # type: ignore[import-untyped]
+    from defusedxml.ElementTree import TreeBuilder, XMLParser  # type: ignore[import-untyped]
 
     _HAS_DEFUSEDXML = True
 except ImportError:
+    from xml.etree.ElementTree import TreeBuilder
+
     _HAS_DEFUSEDXML = False
 
 XML_FORMAT_INSTRUCTIONS = """The output should be formatted as a XML file.
@@ -87,7 +87,7 @@ class _StreamingParser:
             A `dict` representing the parsed XML element.
 
         Raises:
-            xml.etree.ElementTree.ParseError: If the XML is not well-formed.
+            ET.ParseError: If the XML is not well-formed.
         """
         if isinstance(chunk, BaseMessage):
             # extract text
@@ -129,7 +129,7 @@ class _StreamingParser:
                         self.current_path_has_children = True
                     else:
                         self.xml_started = False
-        except xml.etree.ElementTree.ParseError:
+        except ET.ParseError:
             # This might be junk at the end of the XML input.
             # Let's check whether the current path is empty.
             if not self.current_path:
@@ -144,7 +144,7 @@ class _StreamingParser:
         This should be called after all chunks have been parsed.
         """
         # Ignore ParseError. This will ignore any incomplete XML at the end of the input
-        with contextlib.suppress(xml.etree.ElementTree.ParseError):
+        with contextlib.suppress(ET.ParseError):
             self.pull_parser.close()
 
 
