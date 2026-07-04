@@ -1,4 +1,30 @@
 from importlib import import_module
+import re
+
+
+def _validate_identifier(name: str, *, allow_dotted: bool = False) -> None:
+    """Validate that `name` is a safe Python identifier.
+
+    Args:
+        name: The name to validate.
+        allow_dotted: Whether dotted names (``a.b.c``) are permitted.
+
+    Raises:
+        ValueError: If the name contains unsafe characters.
+    """
+    if allow_dotted:
+        parts = name.split(".")
+        if not parts or not all(parts):
+            msg = f"invalid module name {name!r}"
+            raise ValueError(msg)
+        for part in parts:
+            if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", part):
+                msg = f"invalid module name {name!r}"
+                raise ValueError(msg)
+    else:
+        if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name):
+            msg = f"invalid attribute name {name!r}"
+            raise ValueError(msg)
 
 
 def import_attr(
@@ -26,12 +52,14 @@ def import_attr(
         The imported attribute.
     """
     if module_name == "__module__" or module_name is None:
+        _validate_identifier(attr_name)
         try:
             result = import_module(f".{attr_name}", package=package)
         except ModuleNotFoundError:
             msg = f"module '{package!r}' has no attribute {attr_name!r}"
             raise AttributeError(msg) from None
     else:
+        _validate_identifier(module_name, allow_dotted=True)
         try:
             module = import_module(f".{module_name}", package=package)
         except ModuleNotFoundError as err:
