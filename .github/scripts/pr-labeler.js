@@ -101,7 +101,19 @@ function init(github, owner, repo, config, core) {
       else if (rule.suffix) test = p => p.endsWith(rule.suffix);
       else if (rule.exact) test = p => p === rule.exact;
       else if (rule.pattern) {
-        const re = new RegExp(rule.pattern);
+        if (typeof rule.pattern !== 'string' || rule.pattern.length > 500) {
+          throw new Error(
+            `fileRules[${i}] pattern must be a string no longer than 500 characters`
+          );
+        }
+        let re;
+        try {
+          re = new RegExp(rule.pattern);
+        } catch (e) {
+          throw new Error(
+            `fileRules[${i}] (label: "${rule.label}") invalid regex pattern: ${e.message}`
+          );
+        }
         test = p => re.test(p);
       } else {
         throw new Error(
