@@ -26,9 +26,16 @@ _module_lookup = {
 }
 
 
+_ALLOWED_MODULE_PREFIX = "langchain_community.document_compressors."
+
+
 def __getattr__(name: str) -> Any:
     if name in _module_lookup:
-        module = importlib.import_module(_module_lookup[name])
+        module_path = _module_lookup[name]
+        if not module_path.startswith(_ALLOWED_MODULE_PREFIX):
+            msg = f"Invalid module path: {module_path}"
+            raise ValueError(msg)
+        module = importlib.import_module(module_path)
         return getattr(module, name)
     msg = f"module {__name__} has no attribute {name}"
     raise AttributeError(msg)
