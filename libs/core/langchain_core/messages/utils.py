@@ -28,7 +28,21 @@ from typing import (
     cast,
     overload,
 )
-from xml.sax.saxutils import escape, quoteattr
+def _escape(s: str) -> str:
+    return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
+def _quoteattr(s: str) -> str:
+    return (
+        '"'
+        + s.replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace('"', "&quot;")
+        .replace("\n", "&#10;")
+        .replace("\r", "&#13;")
+        + '"'
+    )
 
 from pydantic import Discriminator, Field, Tag
 
@@ -162,13 +176,13 @@ def _format_content_block_xml(block: dict[str, Any]) -> str | None:
     # Text blocks
     if block_type == "text":
         text = block.get("text", "")
-        return escape(text) if text else None
+        return _escape(text) if text else None
 
     # Reasoning blocks
     if block_type == "reasoning":
         reasoning = block.get("reasoning", "")
         if reasoning:
-            return f"<reasoning>{escape(reasoning)}</reasoning>"
+            return f"<reasoning>{_escape(reasoning)}</reasoning>"
         return None
 
     # Image blocks (URL only, base64 already filtered)
@@ -176,9 +190,9 @@ def _format_content_block_xml(block: dict[str, Any]) -> str | None:
         url = block.get("url")
         file_id = block.get("file_id")
         if url:
-            return f"<image url={quoteattr(url)} />"
+            return f"<image url={_quoteattr(url)} />"
         if file_id:
-            return f"<image file_id={quoteattr(file_id)} />"
+            return f"<image file_id={_quoteattr(file_id)} />"
         return None
 
     # OpenAI-style image_url blocks
@@ -187,7 +201,7 @@ def _format_content_block_xml(block: dict[str, Any]) -> str | None:
         if isinstance(image_url, dict):
             url = image_url.get("url", "")
             if url and not url.startswith("data:"):
-                return f"<image url={quoteattr(url)} />"
+                return f"<image url={_quoteattr(url)} />"
         return None
 
     # Audio blocks (URL only)
@@ -195,9 +209,9 @@ def _format_content_block_xml(block: dict[str, Any]) -> str | None:
         url = block.get("url")
         file_id = block.get("file_id")
         if url:
-            return f"<audio url={quoteattr(url)} />"
+            return f"<audio url={_quoteattr(url)} />"
         if file_id:
-            return f"<audio file_id={quoteattr(file_id)} />"
+            return f"<audio file_id={_quoteattr(file_id)} />"
         return None
 
     # Video blocks (URL only)
@@ -205,34 +219,34 @@ def _format_content_block_xml(block: dict[str, Any]) -> str | None:
         url = block.get("url")
         file_id = block.get("file_id")
         if url:
-            return f"<video url={quoteattr(url)} />"
+            return f"<video url={_quoteattr(url)} />"
         if file_id:
-            return f"<video file_id={quoteattr(file_id)} />"
+            return f"<video file_id={_quoteattr(file_id)} />"
         return None
 
     # Plain text document blocks
     if block_type == "text-plain":
         text = block.get("text", "")
-        return escape(_truncate(text)) if text else None
+        return _escape(_truncate(text)) if text else None
 
     # Server tool call blocks (from AI messages)
     if block_type == "server_tool_call":
-        tc_id = quoteattr(str(block.get("id") or ""))
-        tc_name = quoteattr(str(block.get("name") or ""))
+        tc_id = _quoteattr(str(block.get("id") or ""))
+        tc_name = _quoteattr(str(block.get("name") or ""))
         tc_args_json = json.dumps(block.get("args", {}), ensure_ascii=False)
-        tc_args = escape(_truncate(tc_args_json))
+        tc_args = _escape(_truncate(tc_args_json))
         return (
             f"<server_tool_call id={tc_id} name={tc_name}>{tc_args}</server_tool_call>"
         )
 
     # Server tool result blocks
     if block_type == "server_tool_result":
-        tool_call_id = quoteattr(str(block.get("tool_call_id") or ""))
-        status = quoteattr(str(block.get("status") or ""))
+        tool_call_id = _quoteattr(str(block.get("tool_call_id") or ""))
+        status = _quoteattr(str(block.get("status") or ""))
         output = block.get("output")
         if output:
             output_json = json.dumps(output, ensure_ascii=False)
-            output_str = escape(_truncate(output_json))
+            output_str = _escape(_truncate(output_json))
         else:
             output_str = ""
         return (
@@ -338,8 +352,8 @@ def get_buffer_string(
             for `SystemMessage`, `function_prefix` (lowercased) for `FunctionMessage`,
             `tool_prefix` (lowercased) for `ToolMessage`, and the original role
             (unchanged) for `ChatMessage`.
-        - Message content is escaped using `xml.sax.saxutils.escape()`.
-        - Attribute values are escaped using `xml.sax.saxutils.quoteattr()`.
+        - Message content is escaped using `_escape()`.
+        - Attribute values are escaped using `_quoteattr()`.
         - AI messages with tool calls use nested structure with `<content>` and
             `<tool_call>` elements.
         - For multi-modal content (list of content blocks), supported block types
@@ -438,14 +452,14 @@ def get_buffer_string(
 
             # Format content blocks
             if isinstance(m.content, str):
-                content_parts = [escape(m.content)] if m.content else []
+                content_parts = [_escape(m.content)] if m.content else []
             else:
                 # List of content blocks
                 content_parts = []
                 for block in m.content:
                     if isinstance(block, str):
                         if block:
-                            content_parts.append(escape(block))
+                            content_parts.append(_escape(block))
                     else:
                         formatted = _format_content_block_xml(block)
                         if formatted:
@@ -463,15 +477,15 @@ def get_buffer_string(
                 # Use nested structure for AI messages with tool calls
                 # Type narrowing: at this point m is AIMessage (verified above)
                 ai_msg = cast("AIMessage", m)
-                parts = [f"<message type={quoteattr(msg_type)}>"]
+                parts = [f"<message type={_quoteattr(msg_type)}>"]
                 if content_parts:
                     parts.append(f"  <content>{' '.join(content_parts)}</content>")
 
                 if has_tool_calls:
                     for tc in ai_msg.tool_calls:
-                        tc_id = quoteattr(str(tc.get("id") or ""))
-                        tc_name = quoteattr(str(tc.get("name") or ""))
-                        tc_args = escape(
+                        tc_id = _quoteattr(str(tc.get("id") or ""))
+                        tc_name = _quoteattr(str(tc.get("name") or ""))
+                        tc_args = _escape(
                             json.dumps(tc.get("args", {}), ensure_ascii=False)
                         )
                         parts.append(
@@ -480,8 +494,8 @@ def get_buffer_string(
                         )
                 elif has_function_call:
                     fc = ai_msg.additional_kwargs["function_call"]
-                    fc_name = quoteattr(str(fc.get("name") or ""))
-                    fc_args = escape(str(fc.get("arguments") or "{}"))
+                    fc_name = _quoteattr(str(fc.get("name") or ""))
+                    fc_args = _escape(str(fc.get("arguments") or "{}"))
                     parts.append(
                         f"  <function_call name={fc_name}>{fc_args}</function_call>"
                     )
@@ -492,7 +506,7 @@ def get_buffer_string(
                 # Simple structure for messages without tool calls
                 joined_content = " ".join(content_parts)
                 message = (
-                    f"<message type={quoteattr(msg_type)}>{joined_content}</message>"
+                    f"<message type={_quoteattr(msg_type)}>{joined_content}</message>"
                 )
         else:  # format == "prefix"
             content = m.text
