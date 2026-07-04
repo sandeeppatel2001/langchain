@@ -46,10 +46,10 @@ def _make_default_key_encoder(namespace: str, algorithm: str) -> Callable[[str],
     Args:
         namespace: Prefix that segregates keys from different embedding models.
         algorithm:
-           * `'sha1'` - fast but not collision-resistant
            * `'blake2b'` - cryptographically strong, faster than SHA-1
            * `'sha256'` - cryptographically strong, slower than SHA-1
            * `'sha512'` - cryptographically strong, slower than SHA-1
+           * `'sha1'` - fast but not collision-resistant
 
     Returns:
         A function that encodes a key using the specified algorithm.
@@ -92,7 +92,7 @@ def _warn_about_sha1_encoder() -> None:
     global _warned_about_sha1  # noqa: PLW0603
     if not _warned_about_sha1:
         warnings.warn(
-            "Using default key encoder: SHA-1 is *not* collision-resistant. "
+            "Using SHA-1 key encoder: SHA-1 is *not* collision-resistant. "
             "While acceptable for most cache scenarios, a motivated attacker "
             "can craft two different payloads that map to the same cache key. "
             "If that risk matters in your environment, supply a stronger "
@@ -294,7 +294,7 @@ class CacheBackedEmbeddings(Embeddings):
         batch_size: int | None = None,
         query_embedding_cache: bool | ByteStore = False,
         key_encoder: Callable[[str], str]
-        | Literal["sha1", "blake2b", "sha256", "sha512"] = "sha1",
+        | Literal["blake2b", "sha256", "sha512", "sha1"] = "blake2b",
     ) -> CacheBackedEmbeddings:
         """On-ramp that adds the necessary serialization and encoding to the store.
 
@@ -310,12 +310,8 @@ class CacheBackedEmbeddings(Embeddings):
                 True to use the same cache as document embeddings.
                 False to not cache query embeddings.
             key_encoder: Optional callable to encode keys. If not provided,
-                a default encoder using SHA-1 will be used. SHA-1 is not
-                collision-resistant, and a motivated attacker could craft two
-                different texts that hash to the same cache key.
-
-                New applications should use one of the alternative encoders
-                or provide a custom and strong key encoder function to avoid this risk.
+                a default encoder using BLAKE2b will be used. BLAKE2b is
+                cryptographically strong and collision-resistant.
 
                 If you change a key encoder in an existing cache, consider
                 just creating a new cache, to avoid (the potential for)
@@ -339,7 +335,7 @@ class CacheBackedEmbeddings(Embeddings):
                 raise ValueError(msg)
         else:
             msg = (  # type: ignore[unreachable]
-                "key_encoder must be either 'blake2b', 'sha1', 'sha256', 'sha512' "
+                "key_encoder must be either 'blake2b', 'sha256', 'sha512', 'sha1' "
                 "or a callable that encodes keys."
             )
             raise ValueError(msg)  # noqa: TRY004
