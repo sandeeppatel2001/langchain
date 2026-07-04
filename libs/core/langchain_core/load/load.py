@@ -545,6 +545,13 @@ class Reviver:
                 msg = f"Invalid namespace: {value}"
                 raise ValueError(msg)
 
+            # Validate that all parts of the module path are valid Python identifiers
+            # to prevent path traversal or arbitrary module loading.
+            for part in import_dir:
+                if not part.isidentifier():
+                    msg = f"Invalid namespace: {value}"
+                    raise ValueError(msg)
+
             # We don't need to recurse on kwargs
             # as json.loads will do that for us.
             kwargs = value.get("kwargs", {})
