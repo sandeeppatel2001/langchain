@@ -100,6 +100,11 @@ Each entry maps a provider key to a tuple of:
 """
 
 
+_ALLOWED_MODULES: frozenset[str] = frozenset(
+    pkg for pkg, _, _ in _BUILTIN_PROVIDERS.values()
+) | frozenset(["langchain_community.chat_models"])
+
+
 def _import_module(module: str, class_name: str) -> ModuleType:
     """Import a module by name.
 
@@ -114,6 +119,12 @@ def _import_module(module: str, class_name: str) -> ModuleType:
         ImportError: If the module cannot be imported, with a message suggesting
             the pip package to install.
     """
+    if module not in _ALLOWED_MODULES:
+        msg = (
+            f"Module {module!r} is not in the allowed list of modules. "
+            f"Import rejected."
+        )
+        raise ValueError(msg)
     try:
         return importlib.import_module(module)
     except ImportError as e:
