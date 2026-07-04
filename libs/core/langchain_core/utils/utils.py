@@ -5,6 +5,7 @@ import datetime
 import functools
 import importlib
 import os
+import re
 import warnings
 from collections.abc import Callable, Iterator, Sequence
 from importlib.metadata import version
@@ -113,12 +114,37 @@ def mock_now(dt_value: datetime.datetime) -> Iterator[type]:
         datetime.datetime = real_datetime  # type: ignore[misc]
 
 
+_MODULE_NAME_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*$")
+
+
+def _validate_module_name(module_name: str) -> None:
+    """Validate that a module name contains only safe characters.
+
+    Args:
+        module_name: The module name to validate.
+
+    Raises:
+        ValueError: If the module name contains unsafe characters.
+    """
+    if not _MODULE_NAME_RE.match(module_name):
+        msg = (
+            f"Invalid module name '{module_name}'. Module names must consist of "
+            f"valid Python identifiers separated by dots."
+        )
+        raise ValueError(msg)
+
+
 def guard_import(
     module_name: str, *, pip_name: str | None = None, package: str | None = None
 ) -> Any:
     """Dynamically import a module.
 
     Raise an exception if the module is not installed.
+
+    !!! warning "Security"
+        This function should only be called with trusted module names. Do not pass
+        user-supplied input as `module_name` without validating it against an
+        allowlist. Untrusted input could allow arbitrary module loading.
 
     Args:
         module_name: The name of the module to import.
@@ -131,6 +157,7 @@ def guard_import(
     Raises:
         ImportError: If the module is not installed.
     """
+    _validate_module_name(module_name)
     try:
         module = importlib.import_module(module_name, package)
     except (ImportError, ModuleNotFoundError) as e:

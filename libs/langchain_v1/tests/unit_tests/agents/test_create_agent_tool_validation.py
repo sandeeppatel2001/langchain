@@ -291,7 +291,7 @@ def _build_complex_agent(tool: BaseTool) -> tuple[Any, dict[str, Any]]:
     payload = {
         "messages": [HumanMessage("Search for something")],
         "user_id": "user_12345",
-        "api_key": "sk-secret-key-abc123xyz",
+        "api_key": "<API_KEY_PLACEHOLDER>",
         "session_data": {"token": "secret_session_token"},
     }
 
@@ -328,7 +328,7 @@ def _assert_agent_error(result: dict[str, Any]) -> None:
     # Verify NO values from system-injected parameters appear in error
     # The LLM doesn't control these, so they shouldn't distract from the actual issues
     assert "user_12345" not in content, "Error should NOT contain user_id value (from state)"
-    assert "sk-secret-key" not in content, "Error should NOT contain api_key value (from state)"
+    assert "API_KEY_PLACEHOLDER" not in content, "Error should NOT contain api_key value (from state)"
     assert "secret_session_token" not in content, (
         "Error should NOT contain session_data value (from state)"
     )
